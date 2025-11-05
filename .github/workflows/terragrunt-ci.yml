@@ -19,7 +19,7 @@ jobs:
       TF_CLI_DISABLE_UPDATE_CHECK: "1"
       # Set Terraform and Terragrunt versions here so it's easy to update/pin for CI.
       # Recommend pinning to a tested version for reproducible CI runs.
-      TF_VERSION: "1.13.4"
+      TF_VERSION: "1.6.0"
       TG_VERSION: "v0.89.3"
 
     steps:
