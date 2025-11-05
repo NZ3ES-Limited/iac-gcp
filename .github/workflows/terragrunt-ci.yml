@@ -41,7 +41,7 @@ jobs:
           terraform_version: 1.13.5
           terraform_wrapper: false
 
-      - name: Install Terragrunt
+      - name: Setup Terragrunt
         run: |
           sudo rm -f /usr/local/bin/terragrunt # Ensure no old version exists
           TG_VER=v0.93.1
@@ -63,7 +63,7 @@ jobs:
         run: terragrunt hcl fmt --check
 
       - name: Terragrunt Init
-        run: TG_LOG_LEVEL=DEBUG terragrunt run --all init
+        run: TG_LOG_LEVEL=INFO terragrunt run --all init
         working-directory: ./
 
       - name: Terragrunt Plan
