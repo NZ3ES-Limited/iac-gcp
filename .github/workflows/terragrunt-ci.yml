@@ -9,15 +9,15 @@ on:
       - "modules/**"
       - "nz3es/**"
 
+env:
+  # Prevent Terraform from printing the 'Your version of Terraform is out of date' message
+  # which can break parsers that read `terraform --version` (Terragrunt in CI).
+  TF_CLI_DISABLE_UPDATE_CHECK: "1"
+  TG_CLI_DISABLE_UPDATE_CHECK: "1"
 jobs:
   validate:
     name: Terragrunt validate
     runs-on: ubuntu-latest
-    env:
-      # Prevent Terraform from printing the 'Your version of Terraform is out of date' message
-      # which can break parsers that read `terraform --version` (Terragrunt in CI).
-      TF_CLI_DISABLE_UPDATE_CHECK: "1"
-      TG_CLI_DISABLE_UPDATE_CHECK: "1"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,19 +38,19 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.13.4
+          terraform_version: 1.13.5
+          terraform_wrapper: false
 
-      - name: Terraform format check
-        # Fast, local formatting check to enforce canonical formatting on all .tf files
-        run: terraform fmt -check -recursive
-
-      - name: Install Terragrunt
+      - name: Setup Terragrunt
         run: |
           sudo rm -f /usr/local/bin/terragrunt # Ensure no old version exists
           TG_VER=v0.93.1
           wget -q https://github.com/gruntwork-io/terragrunt/releases/download/${TG_VER}/terragrunt_linux_amd64 -O terragrunt
           chmod +x terragrunt
           sudo mv terragrunt /usr/local/bin/terragrunt
+      - name: Terraform format check
+        # Fast, local formatting check to enforce canonical formatting on all .tf files
+        run: terraform fmt -check -recursive
 
       - name: Verify Terragrunt version
         run: terragrunt --version
@@ -62,7 +62,11 @@ jobs:
       - name: Terragrunt Format Check
         run: terragrunt hcl fmt --check
 
+      - name: Terragrunt Init
+        run: TG_LOG_LEVEL=INFO terragrunt run --all init
+        working-directory: ./
+
       - name: Terragrunt Plan
-        run: terragrunt run --all plan
+        run: TG_LOG_LEVEL=DEBUG terragrunt run --all plan
         working-directory: ./
         continue-on-error: true
