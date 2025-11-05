@@ -20,7 +20,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.6.0
+          terraform_version: 1.13.4
 
       - name: Terraform format check
         # Fast, local formatting check to enforce canonical formatting on all .tf files
@@ -29,11 +29,11 @@ jobs:
 
       - name: Install Terragrunt
         run: |
-          TG_VER=v0.55.20
+          TG_VER=v0.93.1
           curl -L https://github.com/gruntwork-io/terragrunt/releases/download/${TG_VER}/terragrunt_linux_amd64 -o terragrunt
           chmod +x terragrunt
           sudo mv terragrunt /usr/local/bin/terragrunt
 
       - name: Terragrunt validate
         run: |
-          terragrunt validate-all
+          terragrunt hcl validate
