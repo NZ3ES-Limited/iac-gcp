@@ -41,6 +41,6 @@ jobs:
       - name: Terragrunt validate (safer)
         run: |
           # Initialize Terraform in all stacks without touching remote backends (fast, safe for PRs)
-          terragrunt run-all -- terraform init -backend=false
+          terragrunt run --all -- terraform init -backend=false
           # Validate Terraform configurations across all stacks
-          terragrunt run-all -- terraform validate
+          terragrunt run --all -- terraform validate
