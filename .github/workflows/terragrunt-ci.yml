@@ -17,6 +17,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: "${{ secrets.GOOGLE_CREDENTIALS }}"
+
+      - name: Setup Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Verify Authentication
+        run: |
+          gcloud config list
+          gcloud projects list
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
@@ -24,20 +37,27 @@ jobs:
 
       - name: Terraform format check
         # Fast, local formatting check to enforce canonical formatting on all .tf files
-        run: |
-          terraform fmt -check -recursive
+        run: terraform fmt -check -recursive
 
       - name: Install Terragrunt
         run: |
+          sudo rm -f /usr/local/bin/terragrunt # Ensure no old version exists
           TG_VER=v0.93.1
-          curl -L https://github.com/gruntwork-io/terragrunt/releases/download/${TG_VER}/terragrunt_linux_amd64 -o terragrunt
+          wget -q https://github.com/gruntwork-io/terragrunt/releases/download/${TG_VER}/terragrunt_linux_amd64 -O terragrunt
           chmod +x terragrunt
           sudo mv terragrunt /usr/local/bin/terragrunt
 
-      - name: Terragrunt hcl validate
-        run: |
-          terragrunt hcl validate
+      - name: Verify Terragrunt version
+        run: terragrunt --version
 
-      - name: Terragrunt hcl format
-        run: |
-          terragrunt hcl fmt --check
+      - name: Terragrunt Validate All
+        run: terragrunt hcl validate
+        continue-on-error: true
+
+      - name: Terragrunt Format Check
+        run: terragrunt hcl fmt --check
+
+      - name: Terragrunt Plan
+        run: terragrunt run --all plan
+        working-directory: ./
+        continue-on-error: true

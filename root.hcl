@@ -82,8 +82,8 @@ terraform {
 }
 
 provider "google" {
-  project = local.project_id
-  region  = local.region
+  project = "${local.project_id}"
+  region  = "${local.region}"
 }
 
 EOF
