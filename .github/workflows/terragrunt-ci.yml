@@ -64,5 +64,5 @@ jobs:
 
       - name: Terragrunt Plan
         run: TG_LOG_LEVEL=DEBUG terragrunt run --all plan
-        working-directory: ./
+        working-directory: ./nz3es/gcp/stg/australia-southeast2
         continue-on-error: true
