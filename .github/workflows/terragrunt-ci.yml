@@ -13,6 +13,10 @@ jobs:
   validate:
     name: Terragrunt validate
     runs-on: ubuntu-latest
+    env:
+      # Prevent Terraform from printing the 'Your version of Terraform is out of date' message
+      # which can break parsers that read `terraform --version` (Terragrunt in CI).
+      TF_CLI_DISABLE_UPDATE_CHECK: "1"
 
     steps:
       - name: Checkout
@@ -34,6 +38,9 @@ jobs:
           chmod +x terragrunt
           sudo mv terragrunt /usr/local/bin/terragrunt
 
-      - name: Terragrunt validate
+      - name: Terragrunt validate (safer)
         run: |
-          terragrunt validate-all
+          # Initialize Terraform in all stacks without touching remote backends (fast, safe for PRs)
+          terragrunt run-all -- terraform init -backend=false
+          # Validate Terraform configurations across all stacks
+          terragrunt run-all -- terraform validate
