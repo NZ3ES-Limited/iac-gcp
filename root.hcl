@@ -4,7 +4,7 @@
 
 
 locals {
-  project_id = get_env("GCP_PROJECT_ID", "DEFAULT_PROJECT_ID")
+  project_id = get_env("GCP_PROJECT_ID", "iac-01")
   region     = get_env("GCP_REGION", "australia-southeast2")
 
   # Absolute path of the Terragrunt working directory that included this file
