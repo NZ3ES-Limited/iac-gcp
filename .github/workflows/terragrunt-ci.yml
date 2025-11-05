@@ -17,6 +17,10 @@ jobs:
       # Prevent Terraform from printing the 'Your version of Terraform is out of date' message
       # which can break parsers that read `terraform --version` (Terragrunt in CI).
       TF_CLI_DISABLE_UPDATE_CHECK: "1"
+      # Set Terraform and Terragrunt versions here so it's easy to update/pin for CI.
+      # Recommend pinning to a tested version for reproducible CI runs.
+      TF_VERSION: "1.13.4"
+      TG_VERSION: "v0.89.3"
 
     steps:
       - name: Checkout
@@ -24,7 +28,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: "1.6.0"
+          terraform_version: ${{ env.TF_VERSION }}
 
       - name: Terraform format check
         # Fast, local formatting check to enforce canonical formatting on all .tf files
@@ -33,14 +37,25 @@ jobs:
 
       - name: Install Terragrunt
         run: |
-          TG_VER=v0.55.20
-          curl -L "https://github.com/gruntwork-io/terragrunt/releases/download/${TG_VER}/terragrunt_linux_amd64" -o terragrunt
+          echo "Installing Terragrunt ${TG_VERSION}"
+          curl -L "https://github.com/gruntwork-io/terragrunt/releases/download/${TG_VERSION}/terragrunt_linux_amd64" -o terragrunt
           chmod +x terragrunt
           sudo mv terragrunt /usr/local/bin/terragrunt
 
-      - name: Terragrunt validate (safer)
+      - name: Log versions
         run: |
-          # Initialize Terraform in all stacks without touching remote backends (fast, safe for PRs)
-          terragrunt run --all -- terraform init -backend=false
-          # Validate Terraform configurations across all stacks
-          terragrunt run --all -- terraform validate
+          echo "terraform version:" && terraform --version
+          echo "terragrunt version:" && terragrunt --version
+
+      - name: Terragrunt validate (safer, version-compatible)
+        run: |
+          set -euo pipefail
+          # Try the modern forwarding pattern first (terragrunt run --all -- ...).
+          # If that fails (older terragrunt), fall back to the legacy run-all command.
+          if terragrunt run --all -- terraform init -backend=false; then
+            terragrunt run --all -- terraform validate
+          else
+            echo "terragrunt run --all failed, falling back to terragrunt run-all"
+            terragrunt run-all -- terraform init -backend=false
+            terragrunt run-all -- terraform validate
+          fi
