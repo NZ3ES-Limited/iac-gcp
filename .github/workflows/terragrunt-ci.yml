@@ -13,22 +13,14 @@ jobs:
   validate:
     name: Terragrunt validate
     runs-on: ubuntu-latest
-    env:
-      # Prevent Terraform from printing the 'Your version of Terraform is out of date' message
-      # which can break parsers that read `terraform --version` (Terragrunt in CI).
-      TF_CLI_DISABLE_UPDATE_CHECK: "1"
-      # Set Terraform and Terragrunt versions here so it's easy to update/pin for CI.
-      # Recommend pinning to a tested version for reproducible CI runs.
-      TF_VERSION: "1.6.0"
-      TG_VERSION: "v0.89.3"
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: ${{ env.TF_VERSION }}
+          terraform_version: 1.6.0
 
       - name: Terraform format check
         # Fast, local formatting check to enforce canonical formatting on all .tf files
@@ -37,41 +29,11 @@ jobs:
 
       - name: Install Terragrunt
         run: |
-          echo "Installing Terragrunt ${TG_VERSION}"
-          curl -L "https://github.com/gruntwork-io/terragrunt/releases/download/${TG_VERSION}/terragrunt_linux_amd64" -o terragrunt
+          TG_VER=v0.55.20
+          curl -L https://github.com/gruntwork-io/terragrunt/releases/download/${TG_VER}/terragrunt_linux_amd64 -o terragrunt
           chmod +x terragrunt
           sudo mv terragrunt /usr/local/bin/terragrunt
 
-      - name: Install terraform wrapper to filter update-check output
+      - name: Terragrunt validate
         run: |
-          # The setup action installs terraform in the toolcache; create a small wrapper
-          # that calls the real terraform binary but strips the "Your version of Terraform is out of date" line
-          REAL_TF="/opt/hostedtoolcache/terraform/${TF_VERSION}/x64/terraform"
-          echo "Creating terraform wrapper that calls ${REAL_TF}"
-          sudo tee /usr/local/bin/terraform > /dev/null <<'EOF'
-            #!/usr/bin/env bash
-            if [[ "$1" == "-version" || "$1" == "--version" ]]; then
-              "${REAL_TF}" "$@" | sed '/Your version of Terraform is out of date/,$d'
-            else
-              exec "${REAL_TF}" "$@"
-            fi
-            EOF
-          sudo chmod +x /usr/local/bin/terraform
-
-      - name: Log versions
-        run: |
-          echo "terraform version:" && terraform --version
-          echo "terragrunt version:" && terragrunt --version
-
-      - name: Terragrunt validate (safer, version-compatible)
-        run: |
-          set -euo pipefail
-          # Try the modern forwarding pattern first (terragrunt run --all -- ...).
-          # If that fails (older terragrunt), fall back to the legacy run-all command.
-          if terragrunt run --all -- terraform init -backend=false; then
-            terragrunt run --all -- terraform validate
-          else
-            echo "terragrunt run --all failed, falling back to terragrunt run-all"
-            terragrunt run-all -- terraform init -backend=false
-            terragrunt run-all -- terraform validate
-          fi
+          terragrunt validate-all
