@@ -41,9 +41,8 @@ remote_state {
     if_exists = "overwrite" # or "skip", "error"
   }
   config = {
-    bucket      = "nz3es-tf-state-iac"
-    prefix      = "tfstate/${path_relative_to_include()}"
-    credentials = get_env("GOOGLE_APPLICATION_CREDENTIALS", "")
+    bucket = "nz3es-tf-state-iac"
+    prefix = "tfstate/${path_relative_to_include()}"
   }
 }
 
@@ -80,6 +79,11 @@ terraform {
       version = ">= 4.0.0"
     }
   }
+}
+
+provider "google" {
+  project = local.project_id
+  region  = local.region
 }
 
 EOF
