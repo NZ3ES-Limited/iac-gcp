@@ -42,6 +42,22 @@ jobs:
           chmod +x terragrunt
           sudo mv terragrunt /usr/local/bin/terragrunt
 
+      - name: Install terraform wrapper to filter update-check output
+        run: |
+          # The setup action installs terraform in the toolcache; create a small wrapper
+          # that calls the real terraform binary but strips the "Your version of Terraform is out of date" line
+          REAL_TF="/opt/hostedtoolcache/terraform/${TF_VERSION}/x64/terraform"
+          echo "Creating terraform wrapper that calls ${REAL_TF}"
+          sudo tee /usr/local/bin/terraform > /dev/null <<'EOF'
+            #!/usr/bin/env bash
+            if [[ "$1" == "-version" || "$1" == "--version" ]]; then
+              "${REAL_TF}" "$@" | sed '/Your version of Terraform is out of date/,$d'
+            else
+              exec "${REAL_TF}" "$@"
+            fi
+            EOF
+          sudo chmod +x /usr/local/bin/terraform
+
       - name: Log versions
         run: |
           echo "terraform version:" && terraform --version
