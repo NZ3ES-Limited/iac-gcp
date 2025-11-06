@@ -22,4 +22,4 @@ terragrunt apply
 ```
 
 - Enable debug log if required
-    TG_LOG_LEVEL=DEBUG terragrunt init
+  - TG_LOG_LEVEL=DEBUG terragrunt init

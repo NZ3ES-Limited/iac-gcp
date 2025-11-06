@@ -52,7 +52,7 @@ jobs:
         # Fast, local formatting check to enforce canonical formatting on all .tf files
         run: terraform fmt -check -recursive
 
-      - name: Verify Terragrunt version
+      - name: Terragrunt version
         run: terragrunt --version
 
       - name: Terragrunt Validate All
